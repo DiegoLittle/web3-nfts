@@ -43,3 +43,4 @@ frontend/build
 # frontend/artifacts/*
 
 backend/node_modules
+backend/.env
