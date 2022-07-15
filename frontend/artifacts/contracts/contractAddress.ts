@@ -1,0 +1,3 @@
+export const MyNFT = '0x4bCb6394C6457c6E5721E02f8E1c92B19C4791F8'
+export const YourContract = '0xc35ba40728648bDa264E9a15ccD19fc02747AD80'
+export const MulticallContract = '0xC363465FAE07C8592eAc5c4bBc7A2251D30F8695'
