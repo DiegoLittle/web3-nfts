@@ -2,13 +2,37 @@ import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { CreateNFTInput } from "../inputs/CreateNFTInput";
 import { NFT } from "../models/NFT";
 import { User } from "../models/User";
+import { S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+// import AWS from "aws-sdk";
 
+
+// AWS.config = new AWS.Config({
+//     accessKeyId: settings?.aws?.akid,
+//     secretAccessKey: settings?.aws?.sak,
+//     region: "us-east-1",
+//     signatureVersion: "v4",
+//   });
+  
+//   const s3 = new AWS.S3();
 
 @Resolver()
 export class TestResolver {
-    @Query(() => String)
-    hello() {
-        return "Hello World!";
+
+    @Query(()=>String)
+    async getPresignedURL(@Arg("filename") filename: string) {
+
+        const s3 = new S3Client({
+            region: "us-east-1",
+            credentials:{
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+            }
+        });
+        const command = new PutObjectCommand({Bucket: 'web3-nfts', Key: filename });
+        const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+        return url;
     }
 
     @Query(() => [NFT])
@@ -20,13 +44,6 @@ export class TestResolver {
                 }
             }
         });
-    }
-
-    @Mutation(() => String)
-    async testMutation(@Arg("id") id: string) {
-        console.log(id)
-        let user = await User.find({where:{id}})
-        return "Hello World!";
     }
 
     @Mutation(()=> NFT)

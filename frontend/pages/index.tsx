@@ -107,20 +107,6 @@ function HomeIndex(): JSX.Element {
   const [createNFT] = useMutation(CreateNFT)
   
   useEffect(() => {
-    // async function authenticate(signature) {
-    //   const request = await fetch(`http://localhost:4000/api/authentication`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({
-    //       address: account,
-    //       signature: signature
-    //     })
-    //   })
-
-    //   const response = await request.json()
-    //   setCookies('access_token', response.access_token)
     async function authenticate(signature) {
       const auth_request = await getAccessToken({variables:{
         address:account,
@@ -150,17 +136,14 @@ function HomeIndex(): JSX.Element {
 
   const isLocalChain =
     chainId === ChainId.Localhost || chainId === ChainId.Hardhat
-
   const CONTRACT_ADDRESS =
     chainId === ChainId.Ropsten
       ? ROPSTEN_CONTRACT_ADDRESS
       : LOCAL_CONTRACT_ADDRESS
-
   // Use the localProvider as the signer to send ETH to our wallet
   const { sendTransaction } = useSendTransaction({
     signer: localProvider.getSigner(),
   })
-
   // call the smart contract, read the current greeting value
   async function fetchContractGreeting() {
     if (library) {
