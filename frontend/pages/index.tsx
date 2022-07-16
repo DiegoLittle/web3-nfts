@@ -1,168 +1,73 @@
-import { Box, Button, Divider, Heading, Input, Text } from '@chakra-ui/react'
-import { ChainId, useEthers, useSendTransaction } from '@usedapp/core'
-import { ethers, providers, utils } from 'ethers'
-import React, { useEffect, useReducer } from 'react'
-import { YourContract as LOCAL_CONTRACT_ADDRESS, MyNFT as NFT_CONTRACT_ADDRESS } from '../artifacts/contracts/contractAddress'
-import YourContract from '../artifacts/contracts/YourContract.sol/YourContract.json'
+import { useLazyQuery, useMutation } from '@apollo/client'
+import { Input, Box, Text, Button } from '@chakra-ui/react'
+import React, { useState } from 'react'
+import Image from 'next/image'
+import { getPresignedURL } from '../lib/queries'
+import { CreateNFT, UpdateNFTContract } from '../lib/mutations'
+import UploadImage from '../components/UploadImage'
+import {  useEthers } from '@usedapp/core'
+import { ethers} from 'ethers'
+import {  MyNFT as NFT_CONTRACT_ADDRESS } from '../artifacts/contracts/contractAddress'
 import MyNFTContract from '../artifacts/contracts/MyNFT.sol/MyNFT.json'
-import { YourContract as YourContractType } from '../types/typechain'
-import { setCookies,getCookie } from 'cookies-next';
-import { gql, useQuery,useMutation } from '@apollo/client'
-
-/**
- * Constants & Helpers
- */
 
 
 
-const localProvider = new providers.StaticJsonRpcProvider(
-  'http://localhost:8545'
-)
-
-const ROPSTEN_CONTRACT_ADDRESS = '0xc15825c6A1478aaA6f3Db86eb0303d3E75e74a4E'
-
-/**
- * Prop Types
- */
-type StateType = {
-  greeting: string
-  inputValue: string
-  isLoading: boolean
-}
-type ActionType =
-  | {
-    type: 'SET_GREETING'
-    greeting: StateType['greeting']
-  }
-  | {
-    type: 'SET_INPUT_VALUE'
-    inputValue: StateType['inputValue']
-  }
-  | {
-    type: 'SET_LOADING'
-    isLoading: StateType['isLoading']
-  }
-
-/**
- * Component
- */
-const initialState: StateType = {
-  greeting: '',
-  inputValue: '',
-  isLoading: false,
-}
-
-function reducer(state: StateType, action: ActionType): StateType {
-  switch (action.type) {
-    // Track the greeting from the blockchain
-    case 'SET_GREETING':
-      return {
-        ...state,
-        greeting: action.greeting,
-      }
-    case 'SET_INPUT_VALUE':
-      return {
-        ...state,
-        inputValue: action.inputValue,
-      }
-    case 'SET_LOADING':
-      return {
-        ...state,
-        isLoading: action.isLoading,
-      }
-    default:
-      throw new Error()
-  }
-}
-
-const UserNonce = gql`
-mutation user_nonce($address: String!) {
- user_nonce(address: $address) {
-   nonce
- }
-}
-`
-const AccessToken = gql`
-mutation authenticate($signature: String!, $address: String!) {
-  authenticate(signature: $signature, address: $address) {
-    access_token
- }
-}
-`
-const CreateNFT = gql`
-mutation createNFT($user_address: String!, $hash: String!,$data: String!) {
-  createNFT(user_address: $user_address, hash: $hash,data:$data) {
-    id
-    data
-    hash
- }
-}
-`
-
-function HomeIndex(): JSX.Element {
-  const [state, dispatch] = useReducer(reducer, initialState)
-  const { account, chainId, library } = useEthers()
-  const [getNonce,{data,loading,error}] = useMutation(UserNonce)
-  const [getAccessToken] = useMutation(AccessToken)
+const CreateNFTPage = (): React.ReactNode => {
+  const { account,  library } = useEthers()
+  const [title, setTitle] = useState<string>('')
+  const [description, setDescription] = useState<string>('')
+  const [file, setFile] = useState<File | null>(null)
+  const [imageUrl, setImageUrl] = useState<string>('')
   const [createNFT] = useMutation(CreateNFT)
-  
-  useEffect(() => {
-    async function authenticate(signature) {
-      const auth_request = await getAccessToken({variables:{
-        address:account,
-        signature:signature
-      }})
-      setCookies('access_token', auth_request.data.authenticate.access_token)
-    }
-    async function fetchNonce() {
+  const [updateNFTContract] = useMutation(UpdateNFTContract)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
-      // const request = await fetch(`http://localhost:4000/${account}/nonce`)
-      // const data = await request.json()
-      // const nonce = data.nonce
-      const nonce_request = await getNonce({variables:{
-        address:account
-      }})
-      const nonce = nonce_request.data.user_nonce.nonce
-      const signer = library.getSigner()
-      const newSignature = await signer.signMessage(nonce.toString())
-      authenticate(newSignature)
-    }
 
-    const cookie = getCookie('access_token')
-    if (typeof (account) != 'undefined' && typeof (cookie) == 'undefined') {
-      fetchNonce()
+  const [getURL] = useLazyQuery(getPresignedURL, {
+    onCompleted: (data) => {
+      uploadImage(data)
     }
-  }, [account])
+  });
 
-  const isLocalChain =
-    chainId === ChainId.Localhost || chainId === ChainId.Hardhat
-  const CONTRACT_ADDRESS =
-    chainId === ChainId.Ropsten
-      ? ROPSTEN_CONTRACT_ADDRESS
-      : LOCAL_CONTRACT_ADDRESS
-  // Use the localProvider as the signer to send ETH to our wallet
-  const { sendTransaction } = useSendTransaction({
-    signer: localProvider.getSigner(),
-  })
-  // call the smart contract, read the current greeting value
-  async function fetchContractGreeting() {
-    if (library) {
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        YourContract.abi,
-        library
-      ) as YourContractType
-      try {
-        const data = await contract.greeting()
-        dispatch({ type: 'SET_GREETING', greeting: data })
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log('Error: ', err)
-      }
-    }
+  const uploadImage = async (data) => {
+    const url = data.getPresignedURL
+    const formData = new FormData();
+    formData.append("file", file);
+    const myHeaders = { 'Content-Type': file.type }
+     await fetch(url, {
+      method: "PUT",
+      headers: myHeaders,
+      body: file
+    });
+    const s3_url = "https://web3-nfts.s3.us-east-1.amazonaws.com/" + file.name
+    setImageUrl(s3_url)
+
+
+    // POST to presigned URL
+
   }
+  const handleFile = async (file: File) => {
+    setFile(file)
+    getURL({ variables: { filename: file.name } })
+  }
+
+
 
   async function mintNFT() {
+    if(!account) {
+      setErrorMessage("Please connect to your wallet")
+      return
+    }
+    const created_nft = await createNFT(
+    {variables:{
+    user_address: account,
+    title: title,
+    description: description,
+    image_url: imageUrl,
+  }})
+  const nft_id = created_nft.data.createNFT.id
+  const tokenURI = process.env.NEXT_PUBLIC_API_URL+"/tokens/"+nft_id
+  // create REST API endpoint to fetch NFTs /token/:id
     if (library) {
       const signer = library.getSigner()
       const contract = new ethers.Contract(
@@ -171,16 +76,18 @@ function HomeIndex(): JSX.Element {
         signer
       )
       try {
-        const data = await contract.mintNFT(account, "http://localhost:3000/test")
+        const data = await contract.mintNFT(account, tokenURI)
         // eslint-disable-next-line no-console
         console.log(data)
         const json_data = JSON.stringify(data)
-        //TODO GraphQL mutation to create the NFT
-        await createNFT({variables:{
-          hash: data.hash,
-          user_address: data.from,
-          data: json_data
-        }})
+        // Update NFT record in GraphQL with transaction data
+        await updateNFTContract({
+          variables: {
+            id: nft_id,
+            hash: data.from,
+            data: json_data,
+          }
+        })
       } catch (err) {
         // eslint-disable-next-line no-console
         console.log('Error: ', err)
@@ -188,54 +95,89 @@ function HomeIndex(): JSX.Element {
     }
   }
 
-  // call the smart contract, send an update
-  async function setContractGreeting() {
-    if (!state.inputValue) return
-    if (library) {
-      dispatch({
-        type: 'SET_LOADING',
-        isLoading: true,
-      })
-      const signer = library.getSigner()
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        YourContract.abi,
-        signer
-      ) as YourContractType
-      const transaction = await contract.setGreeting(state.inputValue)
-      await transaction.wait()
-      fetchContractGreeting()
-      dispatch({
-        type: 'SET_LOADING',
-        isLoading: false,
-      })
-    }
-  }
-
-  function sendFunds(): void {
-    sendTransaction({
-      to: account,
-      value: utils.parseEther('0.1'),
-    })
-  }
 
   return (
-    <Box>
-      <Button
-        onClick={() => {
-          mintNFT()
-        }}
-        size="lg"
-        colorScheme="red"
-        variant="outline"
+    <Box
+    marginLeft={{ base: 0, md:8, lg: 0 }}
+    marginX={{ base: 8, }}
+    >
+      {/* Title */}
+      <Box
+
+        width={{ base: '100%', md: '50%', lg: '25%' }}
       >
-        Mint Test NFT Page
+        <Text
+          fontSize="4xl"
+          fontWeight="bold"
+          marginBottom={4}
+        >Mint an NFT</Text>
+        <Input
+          _focus={{ outlineColor: "orange.300" }}
+          type="text"
+          onChange={(e) => {
+            setTitle(e.target.value)
+          }}
+          placeholder='Title' />
+        <Input
+          _focus={{ outlineColor: "orange.300" }}
+          type="text"
+          marginY="5"
+          onChange={(e) => {
+            setDescription(e.target.value)
+          }}
+          placeholder='Description' />
+      </Box>
+      {/* Description */}
+      <Box 
+      
+        width={{ base: '100%', md: '50%', lg: '25%' }}
+      display={'flex'}
+      justifyContent='center'
+      >
+        {imageUrl ?
+          (
+            <div style={{
+              borderRadius: '10px'
+              ,overflow: 'hidden',
+              marginBottom: '10px'
+            }}>
+              <Image
+            width={'100%'}
+            height={'100%'}
+              src={imageUrl}
+               />
+               </div>
+          ) :
+          (
+            <UploadImage upload={handleFile} />
+          )
+
+        } 
+        </Box>
+        {errorMessage && (
+      <Box 
+      borderRadius={10}
+      marginTop={4}
+      width={{ base: '100%', md: '50%', lg: '25%' }}
+      bgColor="red.100"
+      padding={4}
+      >
+        <Text textAlign={'center'} fontSize={14}>{errorMessage}</Text>
+      </Box>
+      )}
+      <Button
+      onClick={()=>{
+        mintNFT()
+      }}
+        backgroundColor={'orange.300'}
+        _hover={{ backgroundColor: 'orange.400' }}
+        width={{ base: '100%', md: '50%', lg: '25%' }}
+        marginTop={4}
+      >
+        Mint
       </Button>
-      <Text mt="8" fontSize="xl">
-        This page only works on the ROPSTEN Testnet or on a Local Chain.
-      </Text>
     </Box>
   )
 }
 
-export default HomeIndex
+export default CreateNFTPage

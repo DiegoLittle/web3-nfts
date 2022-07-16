@@ -14,12 +14,11 @@ import {
   MenuItem,
   MenuList,
   SimpleGrid,
-  Text,
 } from '@chakra-ui/react'
 import { useEthers, useNotifications } from '@usedapp/core'
 import blockies from 'blockies-ts'
 import NextLink from 'next/link'
-import router, { useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import React from 'react'
 import Balance from '../Balance'
 import ConnectWallet from '../ConnectWallet'
@@ -82,23 +81,7 @@ const Layout = ({ children, customMeta }: LayoutProps): JSX.Element => {
             <Flex py={[4, null, null, 0]}>
               <NextLink href="/" passHref>
                 <Link px="4" py="1">
-                  Index
-                </Link>
-              </NextLink>
-              <NextLink href="/home" passHref>
-                <Link px="4" py="1">
-                  Home
-                </Link>
-              </NextLink>
-
-              {/* <NextLink href="/graph-example" passHref>
-                <Link px="4" py="1">
-                  Graph Example
-                </Link>
-              </NextLink> */}
-              <NextLink href="/signature-example" passHref>
-                <Link px="4" py="1">
-                  Signature Example
+                  Mint NFT
                 </Link>
               </NextLink>
             </Flex>

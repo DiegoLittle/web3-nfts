@@ -9,6 +9,8 @@ const RPC_URLS: { [chainId: number]: string } = {
 export const walletconnect = new WalletConnectConnector({
   rpc: { 1: RPC_URLS[1], 4: RPC_URLS[4] },
   qrcode: true,
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore: Unused variable
   pollingInterval: POLLING_INTERVAL,
 })
 

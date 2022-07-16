@@ -11,7 +11,7 @@ import {
   useDisclosure,
 } from '@chakra-ui/react'
 import { useEthers } from '@usedapp/core'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { walletconnect, walletlink } from '../lib/connectors'
 
 function ConnectWallet(): JSX.Element {
@@ -25,7 +25,7 @@ function ConnectWallet(): JSX.Element {
         order={[-1, null, null, 2]}
         textAlign={['left', null, null, 'right']}
       >
-        <Button colorScheme="teal" variant="outline" onClick={onOpen}>
+        <Button colorScheme="orange" variant="outline" onClick={onOpen}>
           Connect to a wallet
         </Button>
       </Box>

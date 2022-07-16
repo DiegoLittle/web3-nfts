@@ -1,6 +1,7 @@
-import { gql, useMutation, useQuery } from '@apollo/client'
-import React, { useEffect } from 'react'
-import { Box,Text } from '@chakra-ui/react'
+import { gql, useQuery } from '@apollo/client'
+import React from 'react'
+import { Box } from '@chakra-ui/react'
+import NFT from '../../components/NFT'
 
 const getNFTS = gql`
 query getNFTs($user_address: String!) {
@@ -8,6 +9,9 @@ query getNFTs($user_address: String!) {
     id
     data
     hash
+    image_url
+    title
+    description
  }
 }
 `
@@ -20,21 +24,14 @@ const User = ({address}) => {
     })
     if (loading) return 'Loading...';
     if (error) return `Error! ${error.message}`;
-    console.log(data)
     return (
         <Box display="flex" >{
             data.getNFTs.map((nft,index)=>{
               return (
-                <Box 
-                border="1px"
-                borderColor='gray.200'
-                padding={4}
-                marginX="4"
-                borderRadius={12}
-                width={"25%"}
-                key={index}>
-                  <Text>From: {nft.hash}</Text>
-                </Box>
+                <NFT 
+                key={index}
+                {...nft}
+                />
               )
             })
             }</Box>

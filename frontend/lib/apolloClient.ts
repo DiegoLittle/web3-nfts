@@ -1,5 +1,4 @@
-import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client'
-import { concatPagination } from '@apollo/client/utilities'
+import { ApolloClient, InMemoryCache } from '@apollo/client'
 import merge from 'deepmerge'
 import isEqual from 'lodash/isEqual'
 import { useMemo } from 'react'
@@ -28,7 +27,7 @@ function createApolloClient() {
   //   }),
   // })
   return new ApolloClient({
-    uri: 'http://localhost:4000/graphql',
+    uri: process.env.NEXT_PUBLIC_API_URL+"/graphql",
     cache: new InMemoryCache()
   });
 }

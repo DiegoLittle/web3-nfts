@@ -9,8 +9,10 @@ function Balance(): JSX.Element {
   const { account } = useEthers()
   const etherBalance = useEtherBalance(account)
   const finalBalance = etherBalance ? utils.formatEther(etherBalance) : ''
+  const balance = parseFloat(finalBalance).toFixed(4)
 
-  return <Text>{finalBalance} ETH</Text>
+
+  return <Text>{balance} ETH</Text>
 }
 
 export default Balance

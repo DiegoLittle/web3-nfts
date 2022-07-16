@@ -1,9 +1,12 @@
 import { ApolloProvider } from '@apollo/client'
 import { ChakraProvider } from '@chakra-ui/react'
+
 import {
   ChainId,
   Config,
   DAppProvider,
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore: Unused variable
   MULTICALL_ADDRESSES,
 } from '@usedapp/core'
 import type { AppProps } from 'next/app'
@@ -11,7 +14,8 @@ import React from 'react'
 import { MulticallContract } from '../artifacts/contracts/contractAddress'
 import { useApollo } from '../lib/apolloClient'
 import Layout from '../components/layout/Layout'
-
+import { store } from '../store'
+import { Provider } from 'react-redux'
 // scaffold-eth's INFURA_ID, SWAP IN YOURS FROM https://infura.io/dashboard/ethereum
 export const INFURA_ID = 'a38613e5838d473f9bd10b9e11245841'
 
@@ -41,6 +45,7 @@ const config: Config = {
 const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
   const apolloClient = useApollo(pageProps)
   return (
+    <Provider store={store}>
     <ApolloProvider client={apolloClient}>
       <DAppProvider config={config}>
         <ChakraProvider>
@@ -50,6 +55,7 @@ const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
         </ChakraProvider>
       </DAppProvider>
     </ApolloProvider>
+    </Provider>
   )
 }
 
